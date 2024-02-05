@@ -1,0 +1,19 @@
+services:
+
+  uftrace-recv:
+    container_name: uftrace-recv
+    image: uftrace-recv:latest
+    environment:
+      UFTRACE_DATA: "uftrace-data"
+    ports:
+      - "8090"
+
+  uftrace-rest-api-server:
+    container_name: uftrace-rest-api-server
+    image: uftrace-rest-api-server:latest
+    environment:
+      UFTRACE_DATA: "uftrace-data"
+      UFTRACE_RECV: "uftrace-recv"
+    ports:
+      - "8090"
+      - "9090"

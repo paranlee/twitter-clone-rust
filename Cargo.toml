@@ -1,10 +1,29 @@
+cargo-features = ["edition2024"]
+
 [package]
 name = "twitter-clone-rust"
-version = "0.1.0"
-authors = ["Romaric Philogene <rphilogene@qovery.com>"]
-edition = "2018"
+version = "0.0.1"
+authors = ["Romaric Philogene <rphilogene@qovery.com>", "Paran Lee <p4ranlee@gmail.com>"]
+edition = '2021'
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[profile.dev]
+opt-level = 0
+debug = true
+
+# This typically means that DWARF debug information 
+# can be found in the final artifact in sections of the executable.
+split-debuginfo = 'off'
+
+strip = "none"
+debug-assertions = true
+overflow-checks = true
+lto = false
+panic = 'unwind'
+incremental = true
+codegen-units = 256
+rpath = false
 
 [dependencies]
 actix-rt = "1.1.0"
@@ -14,6 +33,7 @@ serde_json = "1.0.51"
 chrono = { version = "0.4", features = ["serde"] }
 uuid = { version = "0.6", features = ["serde", "v4"] }
 env_logger = "0.7.1"
-diesel = { version = "1.4.4", features = ["postgres", "r2d2", "chrono", "uuid"] }
-r2d2 = "0.8.8"
-r2d2-diesel = "1.0.0"
+
+# diesel = { version = "1.4.4", features = ["postgres", "r2d2", "chrono", "uuid"] }
+# r2d2 = "0.8.8"
+# r2d2-diesel = "1.0.0"

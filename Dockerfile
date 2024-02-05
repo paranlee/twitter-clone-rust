@@ -2,29 +2,53 @@
 FROM rust:latest as cargo-build
 
 RUN apt-get update && apt-get install libpq-dev musl-tools -y
-RUN rustup target add x86_64-unknown-linux-musl
+RUN rustup toolchain install nightly && rustup default nightly
 
 WORKDIR /usr/src/app
 
 COPY . .
 
-RUN RUSTFLAGS=-Clinker=musl-gcc cargo build --release --target=x86_64-unknown-linux-musl
+RUN RUSTFLAGS="-Z instrument-mcount -C passes=ee-instrument<post-inline>" cargo build
 
 # final stage
-FROM alpine:latest
+# FROM debian:latest
 
-RUN apk add postgresql-dev
+# ---- for uftrace
+ARG test
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends git gcc make ca-certificates
+RUN mkdir -p /usr/src
+RUN git clone https://github.com/namhyung/uftrace /usr/src/uftrace
+RUN if [ "$test" = "yes" ] ; then \
+        cd /usr/src/uftrace \
+        && ./misc/install-deps.sh -y \
+        && ./configure && make ASAN=1 && make ASAN=1 unittest; \
+    else \
+        cd /usr/src/uftrace && ./misc/install-deps.sh -y && ./configure && make && make install; \
+    fi
+RUN apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+# ---- for uftrace
 
-RUN addgroup -g 1000 app
-RUN adduser -D -s /bin/sh -u 1000 -G app app
+# RUN apk add postgresql-dev
+
+RUN addgroup -gid 1000 app
+RUN useradd -s /bin/sh -u 1000 -g app app
 
 WORKDIR /home/app/bin/
 
-COPY --from=cargo-build /usr/src/app/target/x86_64-unknown-linux-musl/release/twitter-clone-rust .
+COPY --from=cargo-build /usr/src/app/target/debug/twitter-clone-rust .
 
 RUN chown app:app twitter-clone-rust
+
+RUN mkdir -p /home/app/$UFTRACE_DATA
+
 USER app
+
+# ---- for uftrace
+EXPOSE 8090
+# ---- for uftrace
 
 EXPOSE 9090
 
-CMD ["./twitter-clone-rust"]
+CMD /usr/src/uftrace/uftrace --libmcount-path=/usr/src/uftrace record -d /home/app/$UFTRACE_DATA --host $UFTRACE_RECV ./twitter-clone-rust
