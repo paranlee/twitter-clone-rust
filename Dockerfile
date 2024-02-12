@@ -11,7 +11,7 @@ COPY . .
 RUN RUSTFLAGS="-Z instrument-mcount -C passes=ee-instrument<post-inline>" cargo build
 
 # final stage
-# FROM debian:latest
+FROM debian:latest
 
 # ---- for uftrace
 ARG test
@@ -39,16 +39,13 @@ WORKDIR /home/app/bin/
 
 COPY --from=cargo-build /usr/src/app/target/debug/twitter-clone-rust .
 
-RUN chown app:app twitter-clone-rust
-
-RUN mkdir -p /home/app/$UFTRACE_DATA
+RUN chown app:app /home/app/
 
 USER app
 
-# ---- for uftrace
+# ---- uftrace default port
 EXPOSE 8090
-# ---- for uftrace
 
 EXPOSE 9090
 
-CMD /usr/src/uftrace/uftrace --libmcount-path=/usr/src/uftrace record -d /home/app/$UFTRACE_DATA --host $UFTRACE_RECV ./twitter-clone-rust
+CMD /usr/src/uftrace/uftrace -d /home/app/$UFTRACE_DATA --libmcount-path=/usr/src/uftrace record --host $UFTRACE_RECV ./twitter-clone-rust

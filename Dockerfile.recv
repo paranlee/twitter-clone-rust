@@ -21,4 +21,4 @@ USER app
 
 EXPOSE 8090
 
-CMD /usr/src/uftrace/uftrace --libmcount-path=/usr/src/uftrace recv -d /home/app/$UFTRACE_DATA
+CMD /usr/src/uftrace/uftrace recv -d /home/app/$UFTRACE_DATA --libmcount-path=/usr/src/uftrace
